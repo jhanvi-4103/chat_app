@@ -1,16 +1,75 @@
-# kd_chat
+KDChat
 
-A new Flutter project.
+KDChat is a secure and feature-rich chatting application designed for seamless communication. It includes text messaging, voice calls, video calls, and an advanced search system to connect users based on preferences.
 
-## Getting Started
+Features
 
-This project is a starting point for a Flutter application.
+Authentication & User Management
 
-A few resources to get you started if this is your first Flutter project:
+Secure Login & Signup: Users can register and log in securely.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+OTP Verification: Phone number verification via OTP.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Profile Completion: Users set up a profile with a profile picture, username, and phone number.
+
+Chat Functionality
+
+Search Users: Find users by username, nearby location, age, and preferences (e.g., relationship status, gender identity).
+
+Text Messaging: Real-time messaging with secure encryption.
+
+Voice & Video Calls: High-quality calls with low latency.
+
+User Experience
+
+Snapchat-Inspired UI: Interactive and visually engaging design.
+
+Animated Splash Screen: Displays the app name with an engaging animation.
+
+Tech Stack
+
+Frontend: Flutter
+
+State Management: BLoC
+
+Backend: Firebase Authentication, Firestore Database
+
+Additional Services: Google Maps API (for location-based search), Firebase Storage (for profile pictures)
+
+Installation
+
+Clone the repository:
+
+git clone https://github.com/yourusername/KDChat.git
+
+Navigate to the project directory:
+
+cd KDChat
+
+Install dependencies:
+
+flutter pub get
+
+Run the app:
+
+flutter run
+
+Contributing
+
+Contributions are welcome! To contribute:
+
+Fork the repository.
+
+Create a new branch (feature-branch-name).
+
+Commit your changes.
+
+Push the branch and create a pull request.
+
+License
+
+This project is licensed under the MIT License.
+
+Contact
+
+For queries or suggestions, reach out at kashishdarji25@gmail.com.
