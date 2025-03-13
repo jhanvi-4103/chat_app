@@ -16,7 +16,7 @@ class ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Detect dark mode for correct bubble colors
+   
     bool isDarkMode = Provider.of<ThemeProvider>(context, listen: false).isDarkMode;
 
     return Container(
