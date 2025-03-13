@@ -18,17 +18,24 @@ class MyDrawer extends StatelessWidget {
         children: [
           // User Info Section
           StreamBuilder<DocumentSnapshot>(
-            stream: FirebaseFirestore.instance.collection('Users').doc(user?.uid).snapshots(),
+            stream: FirebaseFirestore.instance
+                .collection('NewUsers')
+                .doc(user?.uid)
+                .snapshots(),
             builder: (context, snapshot) {
               if (!snapshot.hasData || snapshot.data == null) {
-                return _buildHeader(context, email: "", avatar: "");
+                return _buildHeader(
+                  context,
+                  name: "Guest",
+                );
               }
               final userData = snapshot.data!.data() as Map<String, dynamic>?;
               return _buildHeader(
                 context,
-                email: userData?['email'] ?? "",
+                name: userData?['name'] ?? "Guest",
                 avatar: userData?['avatar'],
               );
+  
             },
           ),
 
@@ -37,9 +44,12 @@ class MyDrawer extends StatelessWidget {
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                _buildDrawerItem(context, Icons.home, "Home", () => Navigator.pop(context)),
-                _buildDrawerItem(context, Icons.settings, "Settings", () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage()));
+                SizedBox(height: 50,),
+                _buildDrawerItem(
+                    context, Icons.home, "H O M E", () => Navigator.pop(context)),
+                _buildDrawerItem(context, Icons.settings, "S E T T I N G S", () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => SettingsPage()));
                 }),
               ],
             ),
@@ -50,7 +60,11 @@ class MyDrawer extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: ListTile(
-              leading: Icon(Icons.logout, color:Colors.red, size: 30,),
+              leading: Icon(
+                Icons.logout,
+                color: Colors.red,
+                size: 30,
+              ),
               title: Text(
                 "Logout",
                 style: theme.textTheme.bodyLarge?.copyWith(
@@ -69,9 +83,26 @@ class MyDrawer extends StatelessWidget {
     );
   }
 
-  // **User Header Widget**
-  Widget _buildHeader(BuildContext context, {required String email, String? avatar}) {
+// **User Header Widget**
+  Widget _buildHeader(BuildContext context,
+      {required String name, String? avatar}) {
     final theme = Theme.of(context);
+    String defaultAvatar = "assets/avatars/avatar3.png";
+
+    ImageProvider imageProvider;
+
+    if (avatar != null && avatar.isNotEmpty) {
+      if (avatar.startsWith('http')) {
+        imageProvider = NetworkImage(avatar);
+      } else if (avatar.startsWith('assets/')) {
+        imageProvider = AssetImage(avatar);
+      } else {
+        imageProvider = AssetImage(defaultAvatar);
+      }
+    } else {
+      imageProvider = AssetImage(defaultAvatar);
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 30),
@@ -81,15 +112,16 @@ class MyDrawer extends StatelessWidget {
           CircleAvatar(
             radius: 45,
             backgroundColor: theme.colorScheme.onPrimary,
-            backgroundImage: avatar != null && avatar.isNotEmpty
-                ? NetworkImage(avatar)
-                : const AssetImage("assets/avatars/avatar4.png") as ImageProvider,
+            backgroundImage: imageProvider,
           ),
           const SizedBox(height: 12),
           Text(
-            email,
+            name,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onPrimary,
+              color: theme.colorScheme
+                  .onSurface, // Adapts to both light and dark themes
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
             ),
           ),
         ],
@@ -98,7 +130,8 @@ class MyDrawer extends StatelessWidget {
   }
 
   // **Helper Method for Drawer Items**
-  Widget _buildDrawerItem(BuildContext context, IconData icon, String title, VoidCallback onTap) {
+  Widget _buildDrawerItem(
+      BuildContext context, IconData icon, String title, VoidCallback onTap) {
     final theme = Theme.of(context);
     return ListTile(
       leading: Icon(icon, color: theme.colorScheme.primary),

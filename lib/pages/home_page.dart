@@ -8,15 +8,9 @@ import 'package:kd_chat/services/chat/chat_service.dart';
 class HomePage extends StatelessWidget {
   HomePage({super.key});
 
-// chat & Auth service
+  // Chat & Auth services
   final ChatService _chatService = ChatService();
   final AuthService _authService = AuthService();
-
-  void logout() {
-    // get auth service
-    final auth = AuthService();
-    auth.signOut();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +19,7 @@ class HomePage extends StatelessWidget {
         title: const Text('Home'),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: Colors.grey,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         centerTitle: true,
       ),
       drawer: const MyDrawer(),
@@ -33,54 +27,48 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // build a list of user except for thr current logged in user.
+  // Build a list of users except for the current logged-in user.
   Widget _buildUserList() {
     return StreamBuilder(
-        stream: _chatService.getUsersStream(),
-        builder: (context, snapshot) {
-          // error
-          if (snapshot.hasError) {
-            return const Text('Error');
-          }
+      stream: _chatService.getUsersStream(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const Center(child: Text('Error loading users'));
+        }
 
-          // Loading
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Text('Loading..');
-          }
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          // return ListView
-          return ListView(
-            children: snapshot.data!
-                .map<Widget>(
-                    (userData) => _buildUserListItem(userData, context))
-                .toList(),
-          );
-        });
+        final currentUserEmail = _authService.getCurrentUser()?.email;
+
+        // Filter out the logged-in user and build the list
+        final userList = snapshot.data!
+            .where((userData) => userData['email'] != currentUserEmail)
+            .toList();
+
+        return ListView.builder(
+          itemCount: userList.length,
+          itemBuilder: (context, index) {
+            final userData = userList[index];
+            return UserTile(
+              userId: userData['uid'],
+              onTap: () {
+                // Navigate to ChatPage
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ChatPage(
+                      receiversEmail: userData["email"],
+                      receiverID: userData['uid'],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
   }
-
-  // build individual list tile for user
-  Widget _buildUserListItem(
-      Map<String, dynamic> userData, BuildContext context) {
-    // display all user except current user
-    if (userData['email'] != _authService.getCurrentUser()!.email) {
-      return UserTile(
-        text: userData['email'],
-        onTap: () {
-          // tapped on a user -> goto chat page
-
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ChatPage(
-                  receiversEmail: userData["email"],
-                  receiverID: userData['uid'],
-                ),
-              ));
-        },
-      );
-   }  else {
-        return Container();
-      }
-    }
-  }
-
+}
