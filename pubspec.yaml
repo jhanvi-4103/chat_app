@@ -23,6 +23,8 @@ dependencies:
   path: ^1.9.1
   photo_view: ^0.15.0
   build_runner: ^2.4.15
+  zego_uikit_prebuilt_call: ^4.16.25
+  permission_handler: ^11.4.0
 
 
  
@@ -40,8 +42,10 @@ flutter:
   uses-material-design: true
   assets:
     - assets/chatapp.png
+    - assets/avatars/
+    - assets/kdChat.png
 
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/chatapp.png"
+  image_path: "assets/kdChat.png"

@@ -30,7 +30,7 @@ class LoginPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset('assets/chatapp.png', height: 100 ,
+            Image.asset('assets/kdChat.png', height: 100 ,
             ),
             const SizedBox(
               height: 50,
