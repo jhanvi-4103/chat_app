@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:kd_chat/components/chat_bubble.dart';
 import 'package:kd_chat/components/fullSCreenImage.dart' show FullScreenImage;
 import 'package:kd_chat/components/my_text_field.dart';
+import 'package:kd_chat/pages/call_page.dart';
 import 'package:kd_chat/services/auth/auth_service.dart';
 import 'package:kd_chat/services/chat/chat_service.dart';
 
@@ -27,7 +28,44 @@ class _ChatPageState extends State<ChatPage> {
   final AuthService _authService = AuthService();
   final ImagePicker _picker = ImagePicker();
   final ScrollController _scrollController = ScrollController();
+   
+   
+  void _showCallDialog() {
+    TextEditingController callIdController = TextEditingController();
 
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Enter Call ID"),
+        content: TextField(
+          controller: callIdController,
+          decoration: InputDecoration(hintText: "Call ID"),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Cancel"),
+          ),
+          ElevatedButton(
+           
+            onPressed: () {
+              String callID = callIdController.text.trim();
+              if (callID.isNotEmpty) {
+                Navigator.pop(context); // Close the dialog
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CallPage(callID: callID)),
+                );
+              }
+            },
+            child: Text("Start Call"),
+          ),
+        ],
+      ),
+    );
+  }
+ 
+     
   void sendMessage() async {
     if (_messageController.text.trim().isNotEmpty) {
       await _chatService.sendMessage(widget.receiverID,
@@ -64,7 +102,25 @@ class _ChatPageState extends State<ChatPage> {
     await _chatService.markMessageAsDeleted(
         messageId, _authService.getCurrentUser()!.uid, widget.receiverID);
   }
+ void markMessagesAsRead(String senderId, String receiverId) {
+  FirebaseFirestore.instance
+      .collection('messages')
+      .where('senderId', isEqualTo: senderId)
+      .where('receiverId', isEqualTo: receiverId)
+      .where('isRead', isEqualTo: false)
+      .get()
+      .then((querySnapshot) {
+    for (var doc in querySnapshot.docs) {
+      doc.reference.update({'isRead': true});
+    }
+  });
+}
 
+@override
+void initState() {
+  super.initState();
+  markMessagesAsRead(widget.receiverID, _authService.getCurrentUser()!.uid);
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,10 +154,19 @@ class _ChatPageState extends State<ChatPage> {
                 ),
                 const SizedBox(width: 10),
                 Text(name, style: const TextStyle(fontSize: 18)),
+                
+                Padding(
+                  padding: const EdgeInsets.only(left: 145),
+                  child: IconButton(
+                    
+                    onPressed: _showCallDialog,
+                   icon: Icon(Icons.videocam, size: 30, color:Colors.green ,)),
+                )
               ],
             );
           },
         ),
+       
       ),
       body: Column(
         children: [

@@ -16,7 +16,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home'),
+        title: const Text("H O M E", style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: Theme.of(context).colorScheme.onSurface,
@@ -41,6 +41,11 @@ class HomePage extends StatelessWidget {
         }
 
         final currentUserEmail = _authService.getCurrentUser()?.email;
+        final currentUserId = _authService.getCurrentUser()?.uid; // Get Current User ID
+
+        if (currentUserId == null) {
+          return const Center(child: Text('User not found.'));
+        }
 
         // Filter out the logged-in user and build the list
         final userList = snapshot.data!
@@ -53,6 +58,7 @@ class HomePage extends StatelessWidget {
             final userData = userList[index];
             return UserTile(
               userId: userData['uid'],
+              currentUserId: currentUserId, // Pass Current User ID
               onTap: () {
                 // Navigate to ChatPage
                 Navigator.push(

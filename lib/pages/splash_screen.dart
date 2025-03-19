@@ -33,7 +33,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.white, 
       body: Center(
         child: Image.asset(
-          'assets/chatapp.png', 
+          'assets/kdChat.png', 
           width: 300,
           height: 300,
         ),

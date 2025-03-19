@@ -88,7 +88,7 @@ class _RegisterPageState extends State<RegisterPage> {
             // Sticky logo at the top
             Container(
               padding: const EdgeInsets.symmetric(vertical: 20),
-              child: Image.asset('assets/chatapp.png', height: 80),
+              child: Image.asset('assets/kdChat.png', height: 80),
             ),
             Expanded(
               child: SingleChildScrollView(
