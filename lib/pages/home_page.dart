@@ -8,27 +8,40 @@ import 'package:kd_chat/services/chat/chat_service.dart';
 class HomePage extends StatelessWidget {
   HomePage({super.key});
 
-  // Chat & Auth services
   final ChatService _chatService = ChatService();
   final AuthService _authService = AuthService();
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 600;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("H O M E", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          "H O M E",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: isSmallScreen ? 20 : 28,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: Theme.of(context).colorScheme.onSurface,
         centerTitle: true,
       ),
       drawer: const MyDrawer(),
-      body: _buildUserList(),
+      body: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: isSmallScreen ? 8.0 : 24.0,
+          vertical: isSmallScreen ? 10.0 : 16.0,
+        ),
+        child: _buildUserList(context),
+      ),
     );
   }
 
-  // Build a list of users except for the current logged-in user.
-  Widget _buildUserList() {
+  Widget _buildUserList(BuildContext context) {
     return StreamBuilder(
       stream: _chatService.getUsersStream(),
       builder: (context, snapshot) {
@@ -41,36 +54,41 @@ class HomePage extends StatelessWidget {
         }
 
         final currentUserEmail = _authService.getCurrentUser()?.email;
-        final currentUserId = _authService.getCurrentUser()?.uid; // Get Current User ID
+        final currentUserId = _authService.getCurrentUser()?.uid;
 
         if (currentUserId == null) {
           return const Center(child: Text('User not found.'));
         }
 
-        // Filter out the logged-in user and build the list
         final userList = snapshot.data!
             .where((userData) => userData['email'] != currentUserEmail)
             .toList();
+
+        if (userList.isEmpty) {
+          return const Center(child: Text('No other users found.'));
+        }
 
         return ListView.builder(
           itemCount: userList.length,
           itemBuilder: (context, index) {
             final userData = userList[index];
-            return UserTile(
-              userId: userData['uid'],
-              currentUserId: currentUserId, // Pass Current User ID
-              onTap: () {
-                // Navigate to ChatPage
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ChatPage(
-                      receiversEmail: userData["email"],
-                      receiverID: userData['uid'],
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: UserTile(
+                userId: userData['uid'],
+                currentUserId: currentUserId,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ChatPage(
+                        receiversEmail: userData["email"],
+                        receiverID: userData['uid'],
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             );
           },
         );

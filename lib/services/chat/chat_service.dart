@@ -59,20 +59,15 @@ class ChatService {
     }
   }
 
-  Future<String?> sendImageMessage(String receiverID, Uint8List imageBytes, String fileName) async {
-    try {
-      final String filePath = 'chat_images/$fileName';
-      await _supabase.storage.from('images').uploadBinary(filePath, imageBytes);
-      String imageUrl = _supabase.storage.from('images').getPublicUrl(filePath);
-      await sendMessage(receiverID, imageUrl: imageUrl);
+Future<void> sendImageMessage(String receiverID, String imageUrl) async {
+  try {
+    await sendMessage(receiverID, imageUrl: imageUrl);
 
-      if (kDebugMode) print("Image uploaded successfully: $imageUrl");
-      return imageUrl;
-    } catch (e) {
-      if (kDebugMode) print("Image upload failed: $e");
-      return null;
-    }
+    if (kDebugMode) print(" Image message sent with Cloudinary URL: $imageUrl");
+  } catch (e) {
+    if (kDebugMode) print(" Failed to send image message: $e");
   }
+}
 
   Stream<QuerySnapshot> getMessages(String userID, String otherID) {
     String chatRoomID = _generateChatRoomID(userID, otherID);

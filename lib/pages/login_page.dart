@@ -23,70 +23,77 @@ class LoginPage extends StatelessWidget {
    final void  Function()? onTap;
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset('assets/kdChat.png', height: 100 ,
-            ),
-            const SizedBox(
-              height: 50,
-            ),
-            Text(
-              'Welcome back, You have Missed!',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontSize: 16,
+Widget build(BuildContext context) {
+  final width = MediaQuery.of(context).size.width;
+  final height = MediaQuery.of(context).size.height;
+
+  return Scaffold(
+    backgroundColor: Theme.of(context).colorScheme.surface,
+    body: SafeArea(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: width * 0.08),
+        child: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: height),
+            child: IntrinsicHeight(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset('assets/kdChat.png', height: height * 0.15),
+                  SizedBox(height: height * 0.05),
+                  Text(
+                    'Welcome back, You have Missed!',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontSize: height * 0.02,
+                    ),
+                  ),
+                  SizedBox(height: height * 0.03),
+                  MyTextField(
+                    hintText: "Email",
+                    obsecureText: false,
+                    controller: _emailController, obscureText: false,
+                  ),
+                  SizedBox(height: height * 0.015),
+                  MyTextField(
+                    hintText: "Password",
+                    obsecureText: true,
+                    controller: _passwordController, obscureText: true,
+                  ),
+                  SizedBox(height: height * 0.03),
+                  MyButtons(
+                    text: "Login",
+                    onTap: () => login(context),
+                  ),
+                  SizedBox(height: height * 0.03),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Not a member? ",
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: onTap,
+                        child: Text(
+                          "Register Now!!",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(
-              height: 25,
-            ),
-            MyTextField(
-              hintText: "Email",
-              obsecureText: false,
-              controller: _emailController,
-            ),
-            const SizedBox(
-              height: 10,
-            ),
-            MyTextField(
-              hintText: "Password",
-              obsecureText: true,
-              controller: _passwordController,
-            ),
-            const SizedBox(
-              height: 25,
-            ),
-            MyButtons(
-              text: "Login",
-              onTap: () => login(context),
-            ),
-            const SizedBox(
-              height: 25,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text("Not a member? ",
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                ),),
-                  GestureDetector(
-                    onTap: onTap,
-                    child: Text("Register Now!!",style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                       color: Theme.of(context).colorScheme.primary,
-                    ),),
-                  ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

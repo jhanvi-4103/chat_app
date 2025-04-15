@@ -1,7 +1,5 @@
-// ignore_for_file: deprecated_member_use
-
-import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kd_chat/components/chat_bubble.dart';
@@ -10,13 +8,17 @@ import 'package:kd_chat/components/my_text_field.dart';
 import 'package:kd_chat/pages/call_page.dart';
 import 'package:kd_chat/services/auth/auth_service.dart';
 import 'package:kd_chat/services/chat/chat_service.dart';
+import 'package:kd_chat/services/clodinary/cloudinary_service.dart';
 
 class ChatPage extends StatefulWidget {
   final String receiversEmail;
   final String receiverID;
 
-  const ChatPage(
-      {super.key, required this.receiversEmail, required this.receiverID});
+  const ChatPage({
+    super.key,
+    required this.receiversEmail,
+    required this.receiverID,
+  });
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -28,8 +30,8 @@ class _ChatPageState extends State<ChatPage> {
   final AuthService _authService = AuthService();
   final ImagePicker _picker = ImagePicker();
   final ScrollController _scrollController = ScrollController();
-   
-   
+  final CloudinaryService _cloudinaryService = CloudinaryService(); // 👈
+
   void _showCallDialog() {
     TextEditingController callIdController = TextEditingController();
 
@@ -47,14 +49,15 @@ class _ChatPageState extends State<ChatPage> {
             child: Text("Cancel"),
           ),
           ElevatedButton(
-           
             onPressed: () {
               String callID = callIdController.text.trim();
               if (callID.isNotEmpty) {
-                Navigator.pop(context); // Close the dialog
+                Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => CallPage(callID: callID)),
+                  MaterialPageRoute(
+                    builder: (context) => CallPage(callID: callID),
+                  ),
                 );
               }
             },
@@ -64,12 +67,13 @@ class _ChatPageState extends State<ChatPage> {
       ),
     );
   }
- 
-     
+
   void sendMessage() async {
     if (_messageController.text.trim().isNotEmpty) {
-      await _chatService.sendMessage(widget.receiverID,
-          text: _messageController.text.trim());
+      await _chatService.sendMessage(
+        widget.receiverID,
+        text: _messageController.text.trim(),
+      );
       _messageController.clear();
       _scrollToBottom();
     }
@@ -87,40 +91,65 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> sendImageMessage() async {
-    final XFile? pickedFile =
-        await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      Uint8List imageBytes = await pickedFile.readAsBytes();
-      String fileName = pickedFile.name;
-      await _chatService.sendImageMessage(
-          widget.receiverID, imageBytes, fileName);
+    try {
+      final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+
+      if (pickedFile != null) {
+        Uint8List imageBytes = await pickedFile.readAsBytes();
+
+        // ⏫ Upload to Cloudinary
+        String imageUrl = await _cloudinaryService.uploadImage(imageBytes);
+
+        if (imageUrl.isNotEmpty) {
+          await _chatService.sendImageMessage(widget.receiverID, imageUrl);
+          _scrollToBottom();
+        } else {
+          // ignore: use_build_context_synchronously
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Image upload failed")),
+          );
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print("Image upload error: $e");
+      }
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("An error occurred while uploading the image")),
+      );
     }
   }
 
   Future<void> deleteMessage(String messageId) async {
     FocusScope.of(context).requestFocus(FocusNode());
     await _chatService.markMessageAsDeleted(
-        messageId, _authService.getCurrentUser()!.uid, widget.receiverID);
+      messageId,
+      _authService.getCurrentUser()!.uid,
+      widget.receiverID,
+    );
   }
- void markMessagesAsRead(String senderId, String receiverId) {
-  FirebaseFirestore.instance
-      .collection('messages')
-      .where('senderId', isEqualTo: senderId)
-      .where('receiverId', isEqualTo: receiverId)
-      .where('isRead', isEqualTo: false)
-      .get()
-      .then((querySnapshot) {
-    for (var doc in querySnapshot.docs) {
-      doc.reference.update({'isRead': true});
-    }
-  });
-}
 
-@override
-void initState() {
-  super.initState();
-  markMessagesAsRead(widget.receiverID, _authService.getCurrentUser()!.uid);
-}
+  void markMessagesAsRead(String senderId, String receiverId) {
+    FirebaseFirestore.instance
+        .collection('messages')
+        .where('senderId', isEqualTo: senderId)
+        .where('receiverId', isEqualTo: receiverId)
+        .where('isRead', isEqualTo: false)
+        .get()
+        .then((querySnapshot) {
+      for (var doc in querySnapshot.docs) {
+        doc.reference.update({'isRead': true});
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    markMessagesAsRead(widget.receiverID, _authService.getCurrentUser()!.uid);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -132,7 +161,7 @@ void initState() {
           stream: FirebaseFirestore.instance
               .collection('NewUsers')
               .doc(widget.receiverID)
-              .snapshots(), // Real-time updates
+              .snapshots(),
           builder: (context, snapshot) {
             if (!snapshot.hasData || snapshot.data == null) {
               return const Text("Loading...");
@@ -149,24 +178,23 @@ void initState() {
                   radius: 18,
                   backgroundColor: Colors.grey,
                   backgroundImage: avatar != null && avatar.startsWith('http')
-                      ? NetworkImage(avatar) as ImageProvider
-                      : AssetImage(avatar ?? 'assets/avatars/avatar2.png'),
+                      ? NetworkImage(avatar)
+                      : AssetImage(avatar ?? 'assets/avatars/avatar2.png')
+                          as ImageProvider,
                 ),
                 const SizedBox(width: 10),
                 Text(name, style: const TextStyle(fontSize: 18)),
-                
-                Padding(
-                  padding: const EdgeInsets.only(left: 145),
-                  child: IconButton(
-                    
-                    onPressed: _showCallDialog,
-                   icon: Icon(Icons.videocam, size: 30, color:Colors.green ,)),
-                )
+                const Spacer(),
               ],
             );
           },
         ),
-       
+        actions: [
+          IconButton(
+            onPressed: _showCallDialog,
+            icon: const Icon(Icons.videocam, size: 30, color: Colors.green),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -201,8 +229,6 @@ void initState() {
   Widget _buildMessageItem(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>? ?? {};
     bool isCurrentUser = data['senderID'] == _authService.getCurrentUser()?.uid;
-    var alignment =
-        isCurrentUser ? Alignment.centerRight : Alignment.centerLeft;
     bool isDeleted = data['isDeleted'] == true;
 
     return GestureDetector(
@@ -211,8 +237,8 @@ void initState() {
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text("Delete Message"),
-                  content: const Text(
-                      "Are you sure you want to delete this message?"),
+                  content:
+                      const Text("Are you sure you want to delete this message?"),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
@@ -231,11 +257,12 @@ void initState() {
               )
           : null,
       child: Container(
-        alignment: alignment,
+        alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
         padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
         child: Column(
-          crossAxisAlignment:
-              isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment: isCurrentUser
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
           children: [
             if (data.containsKey('imageUrl') &&
                 data['imageUrl'] != null &&
@@ -263,13 +290,16 @@ void initState() {
               ),
             if (isDeleted)
               ChatBubble(
-                  isCurrentUser: isCurrentUser,
-                  message: "This message was deleted."),
+                isCurrentUser: isCurrentUser,
+                message: "This message was deleted.",
+              ),
             if (!isDeleted &&
                 data['message'] != null &&
                 data['message'].toString().isNotEmpty)
               ChatBubble(
-                  isCurrentUser: isCurrentUser, message: data['message']),
+                isCurrentUser: isCurrentUser,
+                message: data['message'],
+              ),
           ],
         ),
       ),
@@ -283,25 +313,19 @@ void initState() {
         children: [
           IconButton(
             onPressed: sendImageMessage,
-            icon: const Icon(
-              Icons.image,
-              color: Colors.blue,
-              size: 30,
-            ),
+            icon: const Icon(Icons.image, size: 30),
           ),
           Expanded(
             child: MyTextField(
-                hintText: "Type a message",
-                obsecureText: false,
-                controller: _messageController),
+              controller: _messageController,
+              hintText: "Type a message",
+              obscureText: false,
+              keyboardType: TextInputType.text, obsecureText: false,
+            ),
           ),
           IconButton(
             onPressed: sendMessage,
-            icon: const Icon(
-              Icons.send,
-              color: Colors.green,
-              size: 30,
-            ),
+            icon: const Icon(Icons.send, size: 30, color: Colors.green),
           ),
         ],
       ),
