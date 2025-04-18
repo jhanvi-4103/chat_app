@@ -15,7 +15,7 @@ class MyTextField extends StatefulWidget {
     required this.controller,
     this.isPasswordField = false,
     this.keyboardType,
-    this.textInputAction, required bool obscureText,
+    this.textInputAction,   
   });
 
   @override

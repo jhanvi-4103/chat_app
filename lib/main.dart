@@ -1,21 +1,20 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:kd_chat/services/auth/auth_gate.dart';
 import 'package:kd_chat/firebase_options.dart';
 import 'package:kd_chat/theme/theme_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 import 'package:permission_handler/permission_handler.dart';
 
 
 void main() async{
 WidgetsFlutterBinding.ensureInitialized();
 await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+WidgetsBinding.instance.addObserver(MyAppLifecycleObserver());
 
-  await Supabase.initialize(
-    url: 'https://fzirwmmkenbbngmbutpl.supabase.co',  
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6aXJ3bW1rZW5iYm5nbWJ1dHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk5NTE2MjQsImV4cCI6MjA1NTUyNzYyNH0.QZBjQNOf4TttAQ2_VOc0MlqM7B-U3raQe5EDrLldfXY',  
-  );
+
 
   await requestPermissions(); 
   runApp(
@@ -45,5 +44,22 @@ class MyApp extends StatelessWidget {
       home:  const AuthGate(),
       theme:Provider.of<ThemeProvider>(context).themedata,
     );
+  }
+}
+class MyAppLifecycleObserver extends WidgetsBindingObserver {
+  final userRef = FirebaseFirestore.instance
+      .collection('NewUsers')
+      .doc(FirebaseAuth.instance.currentUser!.uid);
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      userRef.update({'isOnline': true});
+    } else {
+      userRef.update({
+        'isOnline': false,
+        'lastSeen': Timestamp.now(),
+      });
+    }
   }
 }

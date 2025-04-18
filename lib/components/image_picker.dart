@@ -1,12 +1,9 @@
 // ignore_for_file: avoid_print
 
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kd_chat/services/clodinary/cloudinary_service.dart';
-
-
 
 class ImagePickerComponent {
   final ImagePicker _picker = ImagePicker();
@@ -23,17 +20,20 @@ class ImagePickerComponent {
     }
   }
 
-  /// Uploads an image to Cloudinary and returns the URL
-  Future<String?> uploadImageToCloudinary(File image) async {
-    try {
-      final Uint8List fileBytes = await image.readAsBytes();
-      final String imageUrl = await _cloudinaryService.uploadImage(fileBytes);
-      return imageUrl;
-    } catch (e) {
-      print('Cloudinary upload failed: $e');
-      return null;
-    }
+Future<String?> uploadImageToCloudinary(File image) async {
+  try {
+    // Convert File to Uint8List
+    final imageBytes = await image.readAsBytes();
+
+    // Upload image to Cloudinary
+    final String imageUrl = await _cloudinaryService.uploadImage(imageBytes);
+    print('Uploaded image URL: $imageUrl');  // Add this line
+    return imageUrl;
+  } catch (e) {
+    print('Cloudinary upload failed: $e');
+    return null;
   }
+}
 
   /// Shows a bottom sheet for the user to pick an image source
   void showImageSourceDialog(BuildContext context, Function(File?) onImagePicked) {

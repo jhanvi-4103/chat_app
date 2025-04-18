@@ -169,27 +169,27 @@ class _RegisterPageState extends State<RegisterPage> {
                         MyTextField(
                             hintText: "Name",
                             obsecureText: false,
-                            controller: _nameController, obscureText: false,),
+                            controller: _nameController, ),
                         MyTextField(
                             hintText: "Email",
                             obsecureText: false,
                             controller: _emailController,
-                            keyboardType: TextInputType.emailAddress, obscureText: false,),
+                            keyboardType: TextInputType.emailAddress, ),
                         MyTextField(
                             hintText: "Contact Number",
                             obsecureText: false,
                             controller: _contactController,
-                            keyboardType: TextInputType.phone, obscureText: false,),
+                            keyboardType: TextInputType.phone, ),
                         MyTextField(
                             hintText: "Password",
                             obsecureText: true,
                             controller: _passwordController,
-                            isPasswordField: true, obscureText: true,),
+                            isPasswordField: true,  ),
                         MyTextField(
                             hintText: "Confirm Password",
                             obsecureText: true,
                             controller: _confirmPasswordController,
-                            isPasswordField: true, obscureText: true,),
+                            isPasswordField: true,  ),
 
                         const SizedBox(height: 25),
                         MyButtons(text: "Register", onTap: register),

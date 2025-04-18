@@ -1,38 +1,34 @@
-
-import 'dart:io';
-import 'package:cloudinary_public/cloudinary_public.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
-// ignore: depend_on_referenced_packages
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart';
 
 class CloudinaryService {
-  final cloudinary = CloudinaryPublic(
-    'dig6hkhhz',
-    'CHAT-APP',
-    cache: false,
-  );
+  final String cloudName = 'dig6hkhhz';
+  final String uploadPreset = 'CHAT-APP';
 
   Future<String> uploadImage(Uint8List imageBytes) async {
     try {
-      // Get temporary directory
-      final tempDir = await getTemporaryDirectory();
-      final fileName = 'chat_image_${DateTime.now().millisecondsSinceEpoch}.png';
-      final filePath = join(tempDir.path, fileName);
+      final uri = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
 
-      // Write Uint8List to file
-      final file = await File(filePath).writeAsBytes(imageBytes);
+      final request = http.MultipartRequest('POST', uri)
+        ..fields['upload_preset'] = uploadPreset
+        ..files.add(http.MultipartFile.fromBytes(
+          'file',
+          imageBytes,
+          filename: 'chat_image.jpg',
+        ));
 
-      // Upload file to Cloudinary
-      final response = await cloudinary.uploadFile(
-        CloudinaryFile.fromFile(file.path, folder: 'chat_images'),
-      );
+      final response = await request.send();
 
-      return response.secureUrl;
-    } catch (e) {
-      if (kDebugMode) {
-        print("Error uploading to Cloudinary: $e");
+      if (response.statusCode == 200) {
+        final res = await http.Response.fromStream(response);
+        final data = jsonDecode(res.body);
+        return data['secure_url'];
+      } else {
+        throw Exception('Cloudinary upload failed with status ${response.statusCode}');
       }
+    } catch (e) {
+      if (kDebugMode) print('Cloudinary upload failed: $e');
       return '';
     }
   }

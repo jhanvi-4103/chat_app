@@ -52,13 +52,13 @@ Widget build(BuildContext context) {
                   MyTextField(
                     hintText: "Email",
                     obsecureText: false,
-                    controller: _emailController, obscureText: false,
+                    controller: _emailController, 
                   ),
                   SizedBox(height: height * 0.015),
                   MyTextField(
                     hintText: "Password",
                     obsecureText: true,
-                    controller: _passwordController, obscureText: true,
+                    controller: _passwordController, 
                   ),
                   SizedBox(height: height * 0.03),
                   MyButtons(

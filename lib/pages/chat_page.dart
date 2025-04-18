@@ -1,14 +1,18 @@
+// ignore_for_file: deprecated_member_use
+
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kd_chat/components/chat_bubble.dart';
-import 'package:kd_chat/components/fullSCreenImage.dart' show FullScreenImage;
+import 'package:kd_chat/components/fullSCreenImage.dart';
+import 'package:kd_chat/components/image_picker.dart';
+
 import 'package:kd_chat/components/my_text_field.dart';
 import 'package:kd_chat/pages/call_page.dart';
+import 'package:kd_chat/pages/profile_page.dart';
 import 'package:kd_chat/services/auth/auth_service.dart';
 import 'package:kd_chat/services/chat/chat_service.dart';
-import 'package:kd_chat/services/clodinary/cloudinary_service.dart';
 
 class ChatPage extends StatefulWidget {
   final String receiversEmail;
@@ -30,7 +34,6 @@ class _ChatPageState extends State<ChatPage> {
   final AuthService _authService = AuthService();
   final ImagePicker _picker = ImagePicker();
   final ScrollController _scrollController = ScrollController();
-  final CloudinaryService _cloudinaryService = CloudinaryService(); // 👈
 
   void _showCallDialog() {
     TextEditingController callIdController = TextEditingController();
@@ -38,15 +41,15 @@ class _ChatPageState extends State<ChatPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Enter Call ID"),
+        title: const Text("Enter Call ID"),
         content: TextField(
           controller: callIdController,
-          decoration: InputDecoration(hintText: "Call ID"),
+          decoration: const InputDecoration(hintText: "Call ID"),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text("Cancel"),
+            child: const Text("Cancel"),
           ),
           ElevatedButton(
             onPressed: () {
@@ -56,12 +59,11 @@ class _ChatPageState extends State<ChatPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => CallPage(callID: callID),
-                  ),
+                      builder: (context) => CallPage(callID: callID)),
                 );
               }
             },
-            child: Text("Start Call"),
+            child: const Text("Start Call"),
           ),
         ],
       ),
@@ -73,6 +75,7 @@ class _ChatPageState extends State<ChatPage> {
       await _chatService.sendMessage(
         widget.receiverID,
         text: _messageController.text.trim(),
+        imageUrl: '',
       );
       _messageController.clear();
       _scrollToBottom();
@@ -91,34 +94,31 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> sendImageMessage() async {
-    try {
-      final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final pickerComponent = ImagePickerComponent();
 
-      if (pickedFile != null) {
-        Uint8List imageBytes = await pickedFile.readAsBytes();
+    pickerComponent.showImageSourceDialog(context, (File? imageFile) async {
+      if (imageFile != null) {
+        // Upload image to Cloudinary
+        final imageUrl =
+            await pickerComponent.uploadImageToCloudinary(imageFile);
 
-        // ⏫ Upload to Cloudinary
-        String imageUrl = await _cloudinaryService.uploadImage(imageBytes);
-
-        if (imageUrl.isNotEmpty) {
-          await _chatService.sendImageMessage(widget.receiverID, imageUrl);
+        if (imageUrl != null && imageUrl.isNotEmpty) {
+          // Send the image URL as a message
+          await _chatService.sendImageMessage(
+            widget.receiverID,
+            imageUrl,
+            imageFile.path.split('/').last,
+          );
           _scrollToBottom();
         } else {
+          // Show error if upload fails
           // ignore: use_build_context_synchronously
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Image upload failed")),
+            const SnackBar(content: Text("Failed to upload image")),
           );
         }
       }
-    } catch (e) {
-      if (kDebugMode) {
-        print("Image upload error: $e");
-      }
-      // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("An error occurred while uploading the image")),
-      );
-    }
+    });
   }
 
   Future<void> deleteMessage(String messageId) async {
@@ -154,52 +154,129 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: Colors.grey,
-        title: StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('NewUsers')
-              .doc(widget.receiverID)
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData || snapshot.data == null) {
-              return const Text("Loading...");
-            }
+  backgroundColor: Colors.transparent,
+  elevation: 0,
+  foregroundColor: Colors.grey,
+  title: StreamBuilder<DocumentSnapshot>(
+    stream: FirebaseFirestore.instance
+        .collection('NewUsers')
+        .doc(widget.receiverID)
+        .snapshots(),
+    builder: (context, snapshot) {
+      if (!snapshot.hasData || snapshot.data == null) {
+        return const Text("Loading...");
+      }
 
-            final userData =
-                snapshot.data!.data() as Map<String, dynamic>? ?? {};
-            final String name = userData['name'] ?? "Unknown";
-            final String? avatar = userData['avatar'];
+      final userData =
+          snapshot.data!.data() as Map<String, dynamic>? ?? {};
+      final String name = userData['name'] ?? 'Unknown';
+      final String? avatar = userData['avatar'];
+      final bool isOnline = userData['isOnline'] ?? false;
+      final Timestamp? lastSeenTimestamp = userData['lastSeen'];
+      final DateTime? lastSeen = lastSeenTimestamp?.toDate();
 
-            return Row(
+      String getLastSeenText() {
+        if (isOnline) return "Online";
+        if (lastSeen == null) return "Last seen unknown";
+        final now = DateTime.now();
+        final difference = now.difference(lastSeen);
+
+        if (difference.inMinutes < 1) return "Just now";
+        if (difference.inMinutes < 60) {
+          return "${difference.inMinutes} min ago";
+        }
+        if (difference.inHours < 24) {
+          return "${difference.inHours} hours ago";
+        }
+        return "${lastSeen.day}/${lastSeen.month}/${lastSeen.year}";
+      }
+
+      return Row(
+        children: [
+          GestureDetector(
+            onTap: () {
+              // Navigate to ProfilePage
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProfilePage(userId: widget.receiverID),
+                ),
+              );
+            },
+            child: Stack(
               children: [
                 CircleAvatar(
                   radius: 18,
                   backgroundColor: Colors.grey,
-                  backgroundImage: avatar != null && avatar.startsWith('http')
+                  backgroundImage: (avatar != null && avatar.startsWith('http'))
                       ? NetworkImage(avatar)
-                      : AssetImage(avatar ?? 'assets/avatars/avatar2.png')
-                          as ImageProvider,
+                      : AssetImage(
+                          (avatar != null && avatar.isNotEmpty)
+                              ? avatar
+                              : 'assets/avatars/avatar2.png',
+                        ) as ImageProvider,
                 ),
-                const SizedBox(width: 10),
-                Text(name, style: const TextStyle(fontSize: 18)),
-                const Spacer(),
+                if (isOnline)
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.5),
+                      ),
+                    ),
+                  ),
               ],
-            );
-          },
-        ),
-        actions: [
+            ),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(name, style: const TextStyle(fontSize: 18)),
+              Text(
+                getLastSeenText(),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
           IconButton(
             onPressed: _showCallDialog,
             icon: const Icon(Icons.videocam, size: 30, color: Colors.green),
           ),
         ],
-      ),
-      body: Column(
+      );
+    },
+  ),
+),
+
+      body: Stack(
         children: [
-          Expanded(child: _buildMessageList()),
-          _buildUserInput(),
+          // Background Image
+          Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage("assets/bg2.png"),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+
+          // Foreground Chat UI
+          Column(
+            children: [
+              Expanded(child: _buildMessageList()),
+              _buildUserInput(),
+            ],
+          ),
         ],
       ),
     );
@@ -229,6 +306,8 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildMessageItem(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>? ?? {};
     bool isCurrentUser = data['senderID'] == _authService.getCurrentUser()?.uid;
+    var alignment =
+        isCurrentUser ? Alignment.centerRight : Alignment.centerLeft;
     bool isDeleted = data['isDeleted'] == true;
 
     return GestureDetector(
@@ -237,8 +316,8 @@ class _ChatPageState extends State<ChatPage> {
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text("Delete Message"),
-                  content:
-                      const Text("Are you sure you want to delete this message?"),
+                  content: const Text(
+                      "Are you sure you want to delete this message?"),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
@@ -257,12 +336,11 @@ class _ChatPageState extends State<ChatPage> {
               )
           : null,
       child: Container(
-        alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
+        alignment: alignment,
         padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
         child: Column(
-          crossAxisAlignment: isCurrentUser
-              ? CrossAxisAlignment.end
-              : CrossAxisAlignment.start,
+          crossAxisAlignment:
+              isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             if (data.containsKey('imageUrl') &&
                 data['imageUrl'] != null &&
@@ -313,19 +391,26 @@ class _ChatPageState extends State<ChatPage> {
         children: [
           IconButton(
             onPressed: sendImageMessage,
-            icon: const Icon(Icons.image, size: 30),
+            icon: const Icon(
+              Icons.image,
+              color: Colors.blue,
+              size: 30,
+            ),
           ),
           Expanded(
             child: MyTextField(
-              controller: _messageController,
               hintText: "Type a message",
-              obscureText: false,
-              keyboardType: TextInputType.text, obsecureText: false,
+              obsecureText: false,
+              controller: _messageController,
             ),
           ),
           IconButton(
             onPressed: sendMessage,
-            icon: const Icon(Icons.send, size: 30, color: Colors.green),
+            icon: const Icon(
+              Icons.send,
+              color: Colors.green,
+              size: 30,
+            ),
           ),
         ],
       ),

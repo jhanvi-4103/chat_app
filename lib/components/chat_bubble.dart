@@ -11,7 +11,7 @@ class ChatBubble extends StatelessWidget {
     super.key,
     required this.message,
     required this.isCurrentUser,
-    this.isDeleted = false,
+    this.isDeleted = false, 
   });
 
   @override
