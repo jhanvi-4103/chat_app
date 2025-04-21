@@ -377,6 +377,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.8"
+  curved_navigation_bar:
+    dependency: "direct main"
+    description:
+      name: curved_navigation_bar
+      sha256: bb4ab128fcb6f4a9f0f1f72d227db531818b20218984789777f049fcbf919279
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.6"
   dart_style:
     dependency: transitive
     description:
@@ -880,6 +888,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.1.1"
+  liquid_pull_to_refresh:
+    dependency: "direct main"
+    description:
+      name: liquid_pull_to_refresh
+      sha256: "11e4cd8c5460085a31b479ec4e1cd063eb8e599f35684d57a44dafa1fd1f67f3"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.1"
   logging:
     dependency: transitive
     description:
@@ -888,6 +904,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.3.0"
+  lottie:
+    dependency: "direct main"
+    description:
+      name: lottie
+      sha256: c5fa04a80a620066c15cf19cc44773e19e9b38e989ff23ea32e5903ef1015950
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.3.1"
   matcher:
     dependency: transitive
     description:
@@ -1193,13 +1217,13 @@ packages:
     source: hosted
     version: "0.28.0"
   shared_preferences:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: shared_preferences
-      sha256: "846849e3e9b68f3ef4b60c60cf4b3e02e9321bc7f4d8c4692cf87ffa82fc8a3a"
+      sha256: "6e8bf70b7fef813df4e9a36f658ac46d107db4b4cfe1048b477d4e453a8159f5"
       url: "https://pub.dev"
     source: hosted
-    version: "2.5.2"
+    version: "2.5.3"
   shared_preferences_android:
     dependency: transitive
     description:
@@ -1269,6 +1293,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  smooth_page_indicator:
+    dependency: "direct main"
+    description:
+      name: smooth_page_indicator
+      sha256: b21ebb8bc39cf72d11c7cfd809162a48c3800668ced1c9da3aade13a32cf6c1c
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.1"
   source_span:
     dependency: transitive
     description:
@@ -1665,34 +1697,34 @@ packages:
     dependency: transitive
     description:
       name: zego_plugin_adapter
-      sha256: b8552195f1a9d055e1daa71247434f09b647837d1ac41b41a68b49a6a8bf35b6
+      sha256: af781427cf0f299f5b5760b1d0fe8147b64abac8a535d4130c6eedc166d26326
       url: "https://pub.dev"
     source: hosted
-    version: "2.13.8"
+    version: "2.13.9"
   zego_uikit:
     dependency: transitive
     description:
       name: zego_uikit
-      sha256: "1a7a4cc5ca5781571e71250fcbfa457145670798aedc151bb2a0caa88bf9401f"
+      sha256: f5640ee066290db176e1bf602032819206003336b47bf1c054d0149cb9e42764
       url: "https://pub.dev"
     source: hosted
-    version: "2.28.11"
+    version: "2.28.12"
   zego_uikit_prebuilt_call:
     dependency: "direct main"
     description:
       name: zego_uikit_prebuilt_call
-      sha256: "0507dc506c1f33a461f24555e75ed33fc9ce87e7e4102df9dafde62f04bc1e76"
+      sha256: bd325bb2671f215972c45483beba1ea60d4838ed9df10ab0cbc9056119ecb3fb
       url: "https://pub.dev"
     source: hosted
-    version: "4.16.27"
+    version: "4.16.28"
   zego_uikit_signaling_plugin:
     dependency: transitive
     description:
       name: zego_uikit_signaling_plugin
-      sha256: "7d3bcd763657fd0eb253b05b4c84d48515e46515229884e6e3506c98ba99d453"
+      sha256: "31a903d3bf1c22ea9281d6979c35446a3cc3ae54964855008b6395f0acc6c422"
       url: "https://pub.dev"
     source: hosted
-    version: "2.8.11"
+    version: "2.8.12"
   zego_zim:
     dependency: transitive
     description:

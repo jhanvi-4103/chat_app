@@ -109,7 +109,6 @@ class _ChatPageState extends State<ChatPage> {
             imageUrl,
             imageFile.path.split('/').last,
           );
-          _scrollToBottom();
         } else {
           // Show error if upload fails
           // ignore: use_build_context_synchronously
@@ -177,7 +176,7 @@ class _ChatPageState extends State<ChatPage> {
 
       String getLastSeenText() {
         if (isOnline) return "Online";
-        if (lastSeen == null) return "Last seen unknown";
+        if (lastSeen == null) return "Last seen recently";
         final now = DateTime.now();
         final difference = now.difference(lastSeen);
 

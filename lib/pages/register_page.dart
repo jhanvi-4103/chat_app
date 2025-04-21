@@ -97,12 +97,12 @@ class _RegisterPageState extends State<RegisterPage> {
                       children: [
                         const SizedBox(height: 20),
                         Center(
-                          child: Image.asset('assets/kdChat.png', height: 80),
+                          child: Image.asset('assets/main.png', height: 80),
                         ),
                         const SizedBox(height: 20),
                         Center(
                           child: Text(
-                            'Let’s create an account for You',
+                            "Let's create an account for You",
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.primary,
                               fontSize: 16,
