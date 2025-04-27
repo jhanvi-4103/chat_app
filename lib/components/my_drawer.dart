@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kd_chat/services/auth/auth_service.dart';
-import 'package:kd_chat/pages/settings_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:kd_chat/pages/user_page.dart';
 
 class MyDrawer extends StatelessWidget {
   const MyDrawer({super.key});
@@ -14,76 +14,86 @@ class MyDrawer extends StatelessWidget {
 
     return Drawer(
       backgroundColor: theme.colorScheme.surface,
-      child: Column(
-        children: [
-          // User Info Section
-          StreamBuilder<DocumentSnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('NewUsers')
-                .doc(user?.uid)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData || snapshot.data == null) {
+      child: SafeArea(
+        child: Column(
+          children: [
+            // User Info Section
+            StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('NewUsers')
+                  .doc(user?.uid)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData || snapshot.data == null) {
+                  return _buildHeader(context, name: "Guest");
+                }
+                final userData = snapshot.data!.data() as Map<String, dynamic>?;
                 return _buildHeader(
                   context,
-                  name: "Guest",
+                  name: userData?['name'] ?? "Guest",
+                  avatar: userData?['avatar'],
                 );
-              }
-              final userData = snapshot.data!.data() as Map<String, dynamic>?;
-              return _buildHeader(
-                context,
-                name: userData?['name'] ?? "Guest",
-                avatar: userData?['avatar'],
-              );
-  
-            },
-          ),
-
-          // **Menu Items**
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                SizedBox(height: 50,),
-                _buildDrawerItem(
-                    context, Icons.home, "H O M E", () => Navigator.pop(context)),
-                _buildDrawerItem(context, Icons.settings, "S E T T I N G S", () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => SettingsPage()));
-                }),
-              ],
-            ),
-          ),
-
-          // **Logout Section**
-          const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: ListTile(
-              leading: Icon(
-                Icons.logout,
-                color: Colors.red,
-                size: 30,
-              ),
-              title: Text(
-                "Logout",
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red,
-                  fontSize: 20,
-                ),
-              ),
-              onTap: () {
-                auth.signOut();
               },
             ),
-          ),
-        ],
+
+            const Divider(thickness: 1, height: 1),
+
+            // Centered Menu Items
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0,vertical: 20.0),
+              
+              child: Center(
+              
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildDrawerItem(
+                      context,
+                      Icons.home_rounded,
+                      "H O M E",
+                      () => Navigator.pop(context),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDrawerItem(
+                      context,
+                      Icons.person_rounded,
+                      "P R O F I L E",
+                      () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const UserProfilePage(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Spacer(flex: 1),
+            const Divider(thickness: 1, height: 1),
+
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Text(
+                "Made with by KD ",
+                style: theme.textTheme.bodySmall?.copyWith(
+                  // ignore: deprecated_member_use
+                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-// **User Header Widget**
+  // User Header Widget
   Widget _buildHeader(BuildContext context,
       {required String name, String? avatar}) {
     final theme = Theme.of(context);
@@ -117,11 +127,9 @@ class MyDrawer extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             name,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme
-                  .onSurface, // Adapts to both light and dark themes
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.onPrimary,
               fontWeight: FontWeight.bold,
-              fontSize: 18,
             ),
           ),
         ],
@@ -129,7 +137,7 @@ class MyDrawer extends StatelessWidget {
     );
   }
 
-  // **Helper Method for Drawer Items**
+  // Drawer Item Widget
   Widget _buildDrawerItem(
       BuildContext context, IconData icon, String title, VoidCallback onTap) {
     final theme = Theme.of(context);
@@ -139,6 +147,8 @@ class MyDrawer extends StatelessWidget {
         title,
         style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
       ),
+      // ignore: deprecated_member_use
+      hoverColor: theme.colorScheme.primary.withOpacity(0.1),
       onTap: onTap,
     );
   }

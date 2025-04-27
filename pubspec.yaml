@@ -10,12 +10,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  cloudinary_public: ^0.23.1
   flutter_launcher_icons: ^0.14.3
   cupertino_icons: ^1.0.8
-  firebase_core: ^3.12.1
-  firebase_auth: ^5.5.1
-  cloud_firestore: ^5.6.5
-  provider: ^6.1.2
+  firebase_core: ^3.13.0
+  firebase_auth: ^5.5.2
+  cloud_firestore: ^5.6.6
+  provider: ^6.1.4
   url_launcher: ^6.3.1
   flutter_slidable: ^4.0.0
   image_picker: ^1.1.2
@@ -23,11 +24,20 @@ dependencies:
   path: ^1.9.1
   photo_view: ^0.15.0
   build_runner: ^2.4.15
-  zego_uikit_prebuilt_call: ^4.16.25
+  zego_uikit_prebuilt_call: ^4.16.28
   permission_handler: ^11.4.0
-
-
+  path_provider: ^2.1.5
+  http: ^1.3.0
+  cached_network_image: ^3.4.1
+  curved_navigation_bar: ^1.0.6
+  liquid_pull_to_refresh: ^3.0.1
+  shared_preferences: ^2.5.3
+  lottie: ^3.3.1
+  smooth_page_indicator: ^1.2.1
+  toastification: ^3.0.2
  
+
+
 dependency_overrides:
   floating: ^6.0.0
   vibration: ^3.1.3
@@ -41,11 +51,15 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/
     - assets/chatapp.png
     - assets/avatars/
     - assets/kdChat.png
+    - assets/bg1.png
+    - assets/bg2.png
+    - assets/main.png
 
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/kdChat.png"
+  image_path: "assets/main.png"

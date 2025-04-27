@@ -11,7 +11,8 @@ import 'package:kd_chat/models/message.dart';
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final firebase_auth.FirebaseAuth _auth = firebase_auth.FirebaseAuth.instance;
-  final supabase_auth.SupabaseClient _supabase = supabase_auth.Supabase.instance.client;
+  final supabase_auth.SupabaseClient _supabase =
+      supabase_auth.Supabase.instance.client;
 
   Stream<List<Map<String, dynamic>>> getUsersStream() {
     return _firestore.collection("Users").snapshots().map((snapshot) {
@@ -19,58 +20,61 @@ class ChatService {
     });
   }
 
-  Future<void> sendMessage(String receiverID, {String? text, String? imageUrl}) async {
-    try {
-      final firebase_auth.User? currentUser = _auth.currentUser;
-      if (currentUser == null) {
-        if (kDebugMode) print("Error: User not logged in.");
-        return;
-      }
-
-      final String currentUserID = currentUser.uid;
-      final String currentUserEmail = currentUser.email!;
-      final Timestamp timestamp = Timestamp.now();
-
-      if (text == null && imageUrl == null) {
-        if (kDebugMode) print("Error: Either text or imageUrl must be provided.");
-        return;
-      }
-
-      Message newMessage = Message(
-        senderID: currentUserID,
-        senderEmail: currentUserEmail,
-        receiverID: receiverID,
-        message: text ?? '',
-        imageUrl: imageUrl ?? '',
-        timestamp: timestamp,
-      );
-
-      String chatRoomID = _generateChatRoomID(currentUserID, receiverID);
-
-      await _firestore
-          .collection('chat_rooms')
-          .doc(chatRoomID)
-          .collection('messages')
-          .add(newMessage.toMap());
-
-      if (kDebugMode) print("Message sent successfully.");
-    } catch (e) {
-      if (kDebugMode) print("Failed to send message: $e");
+Future<void> sendMessage(
+  String receiverID, {
+  String? text,
+  required String imageUrl,
+}) async {
+  try {
+    final firebase_auth.User? currentUser = _auth.currentUser;
+    if (currentUser == null) {
+      if (kDebugMode) print("Error: User not logged in.");
+      return;
     }
-  }
 
-  Future<String?> sendImageMessage(String receiverID, Uint8List imageBytes, String fileName) async {
+    final String currentUserID = currentUser.uid;
+    final String currentUserEmail = currentUser.email!;
+    final Timestamp timestamp = Timestamp.now();
+
+    if ((text == null || text.isEmpty) && imageUrl.isEmpty) {
+      if (kDebugMode) print("Error: Both text and imageUrl are empty.");
+      return;
+    }
+
+    Message newMessage = Message(
+      senderID: currentUserID,
+      senderEmail: currentUserEmail,
+      receiverID: receiverID,
+      message: text ?? '',
+      imageUrl: imageUrl,
+      timestamp: timestamp,
+    );
+
+    String chatRoomID = _generateChatRoomID(currentUserID, receiverID);
+
+    await _firestore
+        .collection('chat_rooms')
+        .doc(chatRoomID)
+        .collection('messages')
+        .add(newMessage.toMap());
+
+    if (kDebugMode) print("Message sent successfully.");
+  } catch (e) {
+    if (kDebugMode) print("Failed to send message: $e");
+  }
+}
+
+
+  Future<void> sendImageMessage(
+      String receiverID, String imageUrl, String fileName) async {
     try {
-      final String filePath = 'chat_images/$fileName';
-      await _supabase.storage.from('images').uploadBinary(filePath, imageBytes);
-      String imageUrl = _supabase.storage.from('images').getPublicUrl(filePath);
       await sendMessage(receiverID, imageUrl: imageUrl);
 
-      if (kDebugMode) print("Image uploaded successfully: $imageUrl");
-      return imageUrl;
+      if (kDebugMode) {
+        print(" Image message sent with Cloudinary URL: $imageUrl");
+      }
     } catch (e) {
-      if (kDebugMode) print("Image upload failed: $e");
-      return null;
+      if (kDebugMode) print(" Failed to send image message: $e");
     }
   }
 
@@ -84,7 +88,8 @@ class ChatService {
         .snapshots();
   }
 
-  Future<void> deleteMessage(String messageID, String userID, String otherID) async {
+  Future<void> deleteMessage(
+      String messageID, String userID, String otherID) async {
     try {
       String chatRoomID = _generateChatRoomID(userID, otherID);
       await _firestore
@@ -100,7 +105,8 @@ class ChatService {
     }
   }
 
-  Future<void> markMessageAsDeleted(String messageID, String userID, String otherID) async {
+  Future<void> markMessageAsDeleted(
+      String messageID, String userID, String otherID) async {
     try {
       String chatRoomID = _generateChatRoomID(userID, otherID);
       await _firestore

@@ -1,15 +1,13 @@
 // ignore_for_file: avoid_print
 
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:path/path.dart';
+import 'package:kd_chat/services/clodinary/cloudinary_service.dart';
 
 class ImagePickerComponent {
   final ImagePicker _picker = ImagePicker();
-  final SupabaseClient supabase = Supabase.instance.client;
+  final CloudinaryService _cloudinaryService = CloudinaryService();
 
   /// Picks an image from the given [source] (Gallery or Camera)
   Future<File?> pickImage(ImageSource source) async {
@@ -22,24 +20,21 @@ class ImagePickerComponent {
     }
   }
 
-  Future<String?> uploadImageToSupabase(File image) async {
-    try {
-      final String fileName = basename(image.path);
-      final String filePath = 'chat_images/$fileName';
+Future<String?> uploadImageToCloudinary(File image) async {
+  try {
+    // Convert File to Uint8List
+    final imageBytes = await image.readAsBytes();
 
-      // Convert image to Uint8List
-      final Uint8List fileBytes = await image.readAsBytes().then((bytes) => Uint8List.fromList(bytes));
-
-      // Upload image to Supabase Storage
-      await supabase.storage.from('images').uploadBinary(filePath, fileBytes);
-
-      // Return the public URL of the uploaded image
-      return supabase.storage.from('images').getPublicUrl(filePath);
-    } catch (e) {
-      print('Upload failed: $e');
-      return null;
-    }
+    // Upload image to Cloudinary
+    final String imageUrl = await _cloudinaryService.uploadImage(imageBytes);
+    print('Uploaded image URL: $imageUrl');  // Add this line
+    return imageUrl;
+  } catch (e) {
+    print('Cloudinary upload failed: $e');
+    return null;
   }
+}
+
   /// Shows a bottom sheet for the user to pick an image source
   void showImageSourceDialog(BuildContext context, Function(File?) onImagePicked) {
     showModalBottomSheet(

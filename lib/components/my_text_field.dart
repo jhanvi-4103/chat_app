@@ -15,7 +15,7 @@ class MyTextField extends StatefulWidget {
     required this.controller,
     this.isPasswordField = false,
     this.keyboardType,
-    this.textInputAction,
+    this.textInputAction, 
   });
 
   @override
@@ -29,40 +29,44 @@ class _MyTextFieldState extends State<MyTextField> {
   @override
   void initState() {
     super.initState();
-    _isObscured = widget.obsecureText;
+    _isObscured = widget.isPasswordField ? widget.obsecureText : false;
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: TextField(
         obscureText: _isObscured,
         controller: widget.controller,
         keyboardType: widget.keyboardType ?? TextInputType.text,
         textInputAction: widget.textInputAction ?? TextInputAction.done,
         decoration: InputDecoration(
+          hintText: widget.hintText,
+          // ignore: deprecated_member_use
+          hintStyle: TextStyle(color: theme.colorScheme.primary.withOpacity(0.6)),
+          filled: true,
+          // ignore: deprecated_member_use
+          fillColor: theme.colorScheme.secondary.withOpacity(0.1),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: theme.colorScheme.primary),
+          ),
           enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.primary,
-            ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: theme.colorScheme.primary),
           ),
           focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-          fillColor: Theme.of(context).colorScheme.secondary,
-          filled: true,
-          hintText: widget.hintText,
-          hintStyle: TextStyle(
-            color: Theme.of(context).colorScheme.primary,
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
           ),
           suffixIcon: widget.isPasswordField
               ? IconButton(
                   icon: Icon(
                     _isObscured ? Icons.visibility_off : Icons.visibility,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: theme.colorScheme.primary,
                   ),
                   onPressed: () {
                     setState(() {

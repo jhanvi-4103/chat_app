@@ -1,13 +1,16 @@
 // ignore_for_file: deprecated_member_use
 
-import 'dart:typed_data';
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kd_chat/components/chat_bubble.dart';
-import 'package:kd_chat/components/fullSCreenImage.dart' show FullScreenImage;
+import 'package:kd_chat/components/fullSCreenImage.dart';
+import 'package:kd_chat/components/image_picker.dart';
+
 import 'package:kd_chat/components/my_text_field.dart';
 import 'package:kd_chat/pages/call_page.dart';
+import 'package:kd_chat/pages/profile_page.dart';
 import 'package:kd_chat/services/auth/auth_service.dart';
 import 'package:kd_chat/services/chat/chat_service.dart';
 
@@ -15,8 +18,11 @@ class ChatPage extends StatefulWidget {
   final String receiversEmail;
   final String receiverID;
 
-  const ChatPage(
-      {super.key, required this.receiversEmail, required this.receiverID});
+  const ChatPage({
+    super.key,
+    required this.receiversEmail,
+    required this.receiverID,
+  });
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -28,48 +34,49 @@ class _ChatPageState extends State<ChatPage> {
   final AuthService _authService = AuthService();
   final ImagePicker _picker = ImagePicker();
   final ScrollController _scrollController = ScrollController();
-   
-   
+
   void _showCallDialog() {
     TextEditingController callIdController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Enter Call ID"),
+        title: const Text("Enter Call ID"),
         content: TextField(
           controller: callIdController,
-          decoration: InputDecoration(hintText: "Call ID"),
+          decoration: const InputDecoration(hintText: "Call ID"),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text("Cancel"),
+            child: const Text("Cancel"),
           ),
           ElevatedButton(
-           
             onPressed: () {
               String callID = callIdController.text.trim();
               if (callID.isNotEmpty) {
-                Navigator.pop(context); // Close the dialog
+                Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => CallPage(callID: callID)),
+                  MaterialPageRoute(
+                      builder: (context) => CallPage(callID: callID)),
                 );
               }
             },
-            child: Text("Start Call"),
+            child: const Text("Start Call"),
           ),
         ],
       ),
     );
   }
- 
-     
+
   void sendMessage() async {
     if (_messageController.text.trim().isNotEmpty) {
-      await _chatService.sendMessage(widget.receiverID,
-          text: _messageController.text.trim());
+      await _chatService.sendMessage(
+        widget.receiverID,
+        text: _messageController.text.trim(),
+        imageUrl: '',
+      );
       _messageController.clear();
       _scrollToBottom();
     }
@@ -87,91 +94,188 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> sendImageMessage() async {
-    final XFile? pickedFile =
-        await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      Uint8List imageBytes = await pickedFile.readAsBytes();
-      String fileName = pickedFile.name;
-      await _chatService.sendImageMessage(
-          widget.receiverID, imageBytes, fileName);
-    }
+    final pickerComponent = ImagePickerComponent();
+
+    pickerComponent.showImageSourceDialog(context, (File? imageFile) async {
+      if (imageFile != null) {
+        // Upload image to Cloudinary
+        final imageUrl =
+            await pickerComponent.uploadImageToCloudinary(imageFile);
+
+        if (imageUrl != null && imageUrl.isNotEmpty) {
+          // Send the image URL as a message
+          await _chatService.sendImageMessage(
+            widget.receiverID,
+            imageUrl,
+            imageFile.path.split('/').last,
+          );
+        } else {
+          // Show error if upload fails
+          // ignore: use_build_context_synchronously
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Failed to upload image")),
+          );
+        }
+      }
+    });
   }
 
   Future<void> deleteMessage(String messageId) async {
     FocusScope.of(context).requestFocus(FocusNode());
     await _chatService.markMessageAsDeleted(
-        messageId, _authService.getCurrentUser()!.uid, widget.receiverID);
+      messageId,
+      _authService.getCurrentUser()!.uid,
+      widget.receiverID,
+    );
   }
- void markMessagesAsRead(String senderId, String receiverId) {
-  FirebaseFirestore.instance
-      .collection('messages')
-      .where('senderId', isEqualTo: senderId)
-      .where('receiverId', isEqualTo: receiverId)
-      .where('isRead', isEqualTo: false)
-      .get()
-      .then((querySnapshot) {
-    for (var doc in querySnapshot.docs) {
-      doc.reference.update({'isRead': true});
-    }
-  });
-}
 
-@override
-void initState() {
-  super.initState();
-  markMessagesAsRead(widget.receiverID, _authService.getCurrentUser()!.uid);
-}
+  void markMessagesAsRead(String senderId, String receiverId) {
+    FirebaseFirestore.instance
+        .collection('messages')
+        .where('senderId', isEqualTo: senderId)
+        .where('receiverId', isEqualTo: receiverId)
+        .where('isRead', isEqualTo: false)
+        .get()
+        .then((querySnapshot) {
+      for (var doc in querySnapshot.docs) {
+        doc.reference.update({'isRead': true});
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    markMessagesAsRead(widget.receiverID, _authService.getCurrentUser()!.uid);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: Colors.grey,
-        title: StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('NewUsers')
-              .doc(widget.receiverID)
-              .snapshots(), // Real-time updates
-          builder: (context, snapshot) {
-            if (!snapshot.hasData || snapshot.data == null) {
-              return const Text("Loading...");
-            }
+  backgroundColor: Colors.transparent,
+  elevation: 0,
+  foregroundColor: Colors.grey,
+  title: StreamBuilder<DocumentSnapshot>(
+    stream: FirebaseFirestore.instance
+        .collection('NewUsers')
+        .doc(widget.receiverID)
+        .snapshots(),
+    builder: (context, snapshot) {
+      if (!snapshot.hasData || snapshot.data == null) {
+        return const Text("Loading...");
+      }
 
-            final userData =
-                snapshot.data!.data() as Map<String, dynamic>? ?? {};
-            final String name = userData['name'] ?? "Unknown";
-            final String? avatar = userData['avatar'];
+      final userData =
+          snapshot.data!.data() as Map<String, dynamic>? ?? {};
+      final String name = userData['name'] ?? 'Unknown';
+      final String? avatar = userData['avatar'];
+      final bool isOnline = userData['isOnline'] ?? false;
+      final Timestamp? lastSeenTimestamp = userData['lastSeen'];
+      final DateTime? lastSeen = lastSeenTimestamp?.toDate();
 
-            return Row(
+      String getLastSeenText() {
+        if (isOnline) return "Online";
+        if (lastSeen == null) return "Last seen recently";
+        final now = DateTime.now();
+        final difference = now.difference(lastSeen);
+
+        if (difference.inMinutes < 1) return "Just now";
+        if (difference.inMinutes < 60) {
+          return "${difference.inMinutes} min ago";
+        }
+        if (difference.inHours < 24) {
+          return "${difference.inHours} hours ago";
+        }
+        return "${lastSeen.day}/${lastSeen.month}/${lastSeen.year}";
+      }
+
+      return Row(
+        children: [
+          GestureDetector(
+            onTap: () {
+              // Navigate to ProfilePage
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProfilePage(userId: widget.receiverID),
+                ),
+              );
+            },
+            child: Stack(
               children: [
                 CircleAvatar(
                   radius: 18,
                   backgroundColor: Colors.grey,
-                  backgroundImage: avatar != null && avatar.startsWith('http')
-                      ? NetworkImage(avatar) as ImageProvider
-                      : AssetImage(avatar ?? 'assets/avatars/avatar2.png'),
+                  backgroundImage: (avatar != null && avatar.startsWith('http'))
+                      ? NetworkImage(avatar)
+                      : AssetImage(
+                          (avatar != null && avatar.isNotEmpty)
+                              ? avatar
+                              : 'assets/avatars/avatar2.png',
+                        ) as ImageProvider,
                 ),
-                const SizedBox(width: 10),
-                Text(name, style: const TextStyle(fontSize: 18)),
-                
-                Padding(
-                  padding: const EdgeInsets.only(left: 145),
-                  child: IconButton(
-                    
-                    onPressed: _showCallDialog,
-                   icon: Icon(Icons.videocam, size: 30, color:Colors.green ,)),
-                )
+                if (isOnline)
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.5),
+                      ),
+                    ),
+                  ),
               ],
-            );
-          },
-        ),
-       
-      ),
-      body: Column(
+            ),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(name, style: const TextStyle(fontSize: 18)),
+              Text(
+                getLastSeenText(),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
+          IconButton(
+            onPressed: _showCallDialog,
+            icon: const Icon(Icons.videocam, size: 30, color: Colors.green),
+          ),
+        ],
+      );
+    },
+  ),
+),
+
+      body: Stack(
         children: [
-          Expanded(child: _buildMessageList()),
-          _buildUserInput(),
+          // Background Image
+          Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage("assets/bg2.png"),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+
+          // Foreground Chat UI
+          Column(
+            children: [
+              Expanded(child: _buildMessageList()),
+              _buildUserInput(),
+            ],
+          ),
         ],
       ),
     );
@@ -263,13 +367,16 @@ void initState() {
               ),
             if (isDeleted)
               ChatBubble(
-                  isCurrentUser: isCurrentUser,
-                  message: "This message was deleted."),
+                isCurrentUser: isCurrentUser,
+                message: "This message was deleted.",
+              ),
             if (!isDeleted &&
                 data['message'] != null &&
                 data['message'].toString().isNotEmpty)
               ChatBubble(
-                  isCurrentUser: isCurrentUser, message: data['message']),
+                isCurrentUser: isCurrentUser,
+                message: data['message'],
+              ),
           ],
         ),
       ),
@@ -291,9 +398,10 @@ void initState() {
           ),
           Expanded(
             child: MyTextField(
-                hintText: "Type a message",
-                obsecureText: false,
-                controller: _messageController),
+              hintText: "Type a message",
+              obsecureText: false,
+              controller: _messageController,
+            ),
           ),
           IconButton(
             onPressed: sendMessage,

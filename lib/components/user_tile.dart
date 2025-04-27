@@ -67,7 +67,7 @@ class UserTile extends StatelessWidget {
 
             // Username
             Expanded(
-              child: Text(name, style: Theme.of(context).textTheme.bodyMedium),
+              child: Text(name, style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSecondary, fontWeight: FontWeight.bold)),
             ),
 
             // Unread Messages Counter
