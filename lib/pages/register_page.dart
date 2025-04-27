@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kd_chat/services/auth/auth_service.dart';
 import 'package:kd_chat/components/my_buttons.dart';
 import 'package:kd_chat/components/my_text_field.dart';
+import 'package:toastification/toastification.dart';
 
 class RegisterPage extends StatefulWidget {
   final void Function()? onTap;
@@ -19,6 +20,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
+  final TextEditingController _bioController = TextEditingController();
 
   int _selectedAvatarIndex = 0;
   bool _isAvatarSelected = false;
@@ -29,48 +31,52 @@ class _RegisterPageState extends State<RegisterPage> {
     'assets/avatars/avatar4.png',
     'assets/avatars/avatar5.png',
   ];
+void register() async {
+  final auth = AuthService();
 
-  void register() async {
-    final auth = AuthService();
+  if (_passwordController.text != _confirmPasswordController.text) {
+    showDialog(
+      context: context,
+      builder: (context) => const AlertDialog(
+        title: Text("Passwords don't match!"),
+      ),
+    );
+    return;
+  }
 
-    if (_passwordController.text != _confirmPasswordController.text) {
-      showDialog(
+  try {
+    await auth.signupWithEmailAndPassword(
+      _emailController.text.trim(),
+      _passwordController.text.trim(),
+      _nameController.text.trim(),
+      _contactController.text.trim(),
+      _avatars[_selectedAvatarIndex],
+      _bioController.text.trim(),
+    );
+
+    // Show success Toastification
+    if (mounted) {
+      toastification.show(
         context: context,
-        builder: (context) => const AlertDialog(
-          title: Text("Passwords don't match!"),
-        ),
+        title: const Text(
+            'Verification link sent to your email. Please verify!'),
+        autoCloseDuration: const Duration(seconds: 3),
+        alignment: Alignment.bottomCenter,
+        style: ToastificationStyle.flatColored,
+        type: ToastificationType.success,
       );
-      return;
     }
 
-    try {
-      await auth.signupWithEmailAndPassword(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-        _nameController.text.trim(),
-        _contactController.text.trim(),
-        _avatars[_selectedAvatarIndex], // Pass the selected avatar
-      );
+    // Wait for toast to show before navigating
+    await Future.delayed(const Duration(seconds: 3));
 
+    // Then navigate to Login manually
+    if (mounted) {
+      widget.onTap?.call();
+    }
+  } catch (e) {
+    if (mounted) {
       showDialog(
-        // ignore: use_build_context_synchronously
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text("Account created successfully!"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                widget.onTap?.call(); // Navigate to login
-              },
-              child: const Text("OK"),
-            ),
-          ],
-        ),
-      );
-    } catch (e) {
-      showDialog(
-        // ignore: use_build_context_synchronously
         context: context,
         builder: (context) => AlertDialog(
           title: Text("Error: ${e.toString()}"),
@@ -78,6 +84,7 @@ class _RegisterPageState extends State<RegisterPage> {
       );
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -167,29 +174,41 @@ class _RegisterPageState extends State<RegisterPage> {
 
                         // Form fields
                         MyTextField(
-                            hintText: "Name",
-                            obsecureText: false,
-                            controller: _nameController, ),
+                          hintText: "Name",
+                          obsecureText: false,
+                          controller: _nameController,
+                        ),
                         MyTextField(
-                            hintText: "Email",
-                            obsecureText: false,
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress, ),
+                          hintText: "Email",
+                          obsecureText: false,
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                        ),
                         MyTextField(
-                            hintText: "Contact Number",
-                            obsecureText: false,
-                            controller: _contactController,
-                            keyboardType: TextInputType.phone, ),
+                          hintText: "Contact Number",
+                          obsecureText: false,
+                          controller: _contactController,
+                          keyboardType: TextInputType.phone,
+                        ),
                         MyTextField(
-                            hintText: "Password",
-                            obsecureText: true,
-                            controller: _passwordController,
-                            isPasswordField: true,  ),
+                          hintText: "Password",
+                          obsecureText: true,
+                          controller: _passwordController,
+                          isPasswordField: true,
+                        ),
                         MyTextField(
-                            hintText: "Confirm Password",
-                            obsecureText: true,
-                            controller: _confirmPasswordController,
-                            isPasswordField: true,  ),
+                          hintText: "Confirm Password",
+                          obsecureText: true,
+                          controller: _confirmPasswordController,
+                          isPasswordField: true,
+                        ),
+                        MyTextField(
+                          hintText: "Bio",
+                          obsecureText: false,
+                          controller: _bioController,
+                          keyboardType: TextInputType.text,
+                          // Allow multiple lines for bio
+                        ),
 
                         const SizedBox(height: 25),
                         MyButtons(text: "Register", onTap: register),
@@ -227,4 +246,15 @@ class _RegisterPageState extends State<RegisterPage> {
       ),
     );
   }
+
+  // @override
+  // void dispose() {
+  //   _nameController.dispose();
+  //   _emailController.dispose();
+  //   _contactController.dispose();
+  //   _passwordController.dispose();
+  //   _confirmPasswordController.dispose();
+  //   _bioController.dispose();
+  //   super.dispose();
+  // }
 }

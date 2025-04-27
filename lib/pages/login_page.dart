@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:kd_chat/components/my_buttons.dart';
 import 'package:kd_chat/components/my_text_field.dart';
+import 'package:kd_chat/pages/home_page.dart';
 import 'package:kd_chat/services/auth/auth_service.dart';
+import 'package:toastification/toastification.dart';
 
 class LoginPage extends StatefulWidget {
   final void Function()? onTap;
@@ -16,31 +18,52 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
   void login(BuildContext context) async {
-    final authService = AuthService();
-    try {
-      await authService.signInWithEmailAndPassword(
-        _emailController.text,
-        _passwordController.text,
-      );
-    } catch (e) {
-      showDialog(
-        // ignore: use_build_context_synchronously
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Login Failed'),
-          content: Text(e.toString()),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            )
-          ],
-        ),
-      );
-    }
+  final authService = AuthService();
+  try {
+    await authService.signInWithEmailAndPassword(
+      _emailController.text,
+      _passwordController.text,
+    );
+
+    // Show success Toastification
+    toastification.show(
+      // ignore: use_build_context_synchronously
+      context: context,
+      title: const Text("Logged in successfully ✅"),
+      autoCloseDuration: const Duration(seconds: 2),
+      alignment: Alignment.bottomCenter,
+      style: ToastificationStyle.flatColored,
+      type: ToastificationType.success,
+    );
+
+    // Wait for toast to show before navigating
+    await Future.delayed(const Duration(seconds: 2));
+
+    // Navigate to HomePage
+    Navigator.pushReplacement(
+      // ignore: use_build_context_synchronously
+      context,
+      MaterialPageRoute(builder: (context) => const HomePage()),
+    );
+  } catch (e) {
+    showDialog(
+      // ignore: use_build_context_synchronously
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Login Failed'),
+        content: Text(e.toString()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          )
+        ],
+      ),
+    );
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:kd_chat/onbording/splash_screen.dart';
 import 'package:kd_chat/services/auth/auth_gate.dart';
 import 'package:kd_chat/firebase_options.dart';
 import 'package:kd_chat/theme/theme_provider.dart';
@@ -42,15 +43,35 @@ Future<void> requestPermissions() async {
   ].request();
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _showSplash = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _startSplashDelay();
+  }
+
+  void _startSplashDelay() async {
+    await Future.delayed(const Duration(seconds: 3));
+    setState(() {
+      _showSplash = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Kd Chat',
-      home: const AuthGate(),
+      home: _showSplash ? const SplashScreen() : const AuthGate(),
       theme: Provider.of<ThemeProvider>(context).themedata,
     );
   }

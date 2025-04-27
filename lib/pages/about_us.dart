@@ -46,7 +46,7 @@ class AboutUsPage extends StatelessWidget {
               child: Column(
                 children: [
                   Image.asset(
-                    'assets/kdChat.png', 
+                    'assets/main.png', 
                     height: 100,
                   ),
                   

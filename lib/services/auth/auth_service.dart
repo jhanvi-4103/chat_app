@@ -33,19 +33,30 @@ class AuthService {
 
   // Sign up (Store new users separately)
   Future<UserCredential> signupWithEmailAndPassword(
-      String email, String password, String name, String contact, String avatarUrl) async {
+      String email,
+      String password,
+      String name,
+      String contact,
+      String avatarUrl,
+      String bio) async {
     try {
       // Create user
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-          email: email, password: password);
-
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
+      // Send email verification
+      await userCredential.user!.sendEmailVerification();
       // Save full user details in 'NewUsers' collection (for original registration data)
-      await _firestore.collection('NewUsers').doc(userCredential.user!.uid).set({
+      await _firestore
+          .collection('NewUsers')
+          .doc(userCredential.user!.uid)
+          .set({
         'uid': userCredential.user!.uid,
         'name': name,
         'email': email,
         'contact': contact,
-        'avatar': avatarUrl, // Store avatar
+        'avatar': avatarUrl,
+        'bio': bio,
+        // Store avatar
         'createdAt': FieldValue.serverTimestamp(), // Timestamp
       });
 
@@ -67,7 +78,8 @@ class AuthService {
       User? user = getCurrentUser();
       if (user == null) return null;
 
-      DocumentSnapshot doc = await _firestore.collection('NewUsers').doc(user.uid).get();
+      DocumentSnapshot doc =
+          await _firestore.collection('NewUsers').doc(user.uid).get();
       if (doc.exists) {
         return doc.data() as Map<String, dynamic>;
       }

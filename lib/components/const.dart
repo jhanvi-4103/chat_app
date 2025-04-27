@@ -1,2 +1,2 @@
-const appId = 2088605745;
-const appSignIn = "bb339ad38766038c0dcb36aa47480e33ec704d3bf025add0f29acb73e1550f35";
+const appId = 1340033572;
+const appSignIn = "b535491c84fc3151151bd1be2e3e646ae53387c728380ca9e6f0cd6b5b722f65";
