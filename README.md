@@ -1,6 +1,6 @@
-KDChat
+Chat App
 
-KDChat is a secure and feature-rich chatting application designed for seamless communication. It includes text messaging, voice calls, video calls, and an advanced search system to connect users based on preferences.
+Chat App is a secure and feature-rich chatting application designed for seamless communication. It includes text messaging, voice calls, video calls, and an advanced search system to connect users based on preferences.
 
 Features
 
