@@ -72,4 +72,4 @@ This project is licensed under the MIT License.
 
 Contact
 
-For queries or suggestions, reach out at kashishdarji25@gmail.com.
+For queries or suggestions, reach out at jahanvimakwana404@gmail.com
